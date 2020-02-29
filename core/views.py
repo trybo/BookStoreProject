@@ -19,6 +19,7 @@ def checkout(request):
 
 class HomeView(ListView):
     model = Book
+    paginate_by = 10
     template_name = "home.html"
 
 
@@ -28,7 +29,7 @@ class BookDetailView(DetailView):
 
 
 def add_to_cart(request, slug):
-    book = get_object_or_404(Item, slug=slug)
+    book = get_object_or_404(Book, slug=slug)
     order_book, created = OrderBook.objects.get_or_create(
         book=book,
         user=request.user,
@@ -43,7 +44,7 @@ def add_to_cart(request, slug):
             messages.info(request, "Ilość książek została zaktualizowana.")
             return redirect("core:product", slug=slug)
         else:
-            order.books.add(order_item)
+            order.books.add(order_book)
             messages.info(request, "Książka została dodana do koszyka.")
             return redirect("core:product", slug=slug)
     else:
@@ -56,14 +57,14 @@ def add_to_cart(request, slug):
 
 
 def remove_from_cart(request, slug):
-    book = get_object_or_404(Item, slug=slug)
+    book = get_object_or_404(Book, slug=slug)
     order_qs = Order.objects.filter(
         user=request.user,
         ordered=False
     )
     if order_qs.exists():
         order = order_qs[0]
-        if order.books.filter(item__slug=book.slug).exists():
+        if order.books.filter(book__slug=book.slug).exists():
             order_book = OrderBook.objects.filter(
                 book=book,
                 user=request.user,
